@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<catalog>
+  <product>
+    <id>1</id>
+    <type>simple</type>
+    <sku>BENZ-001</sku>
+    <ean>1234567890123</ean>
+    <name>Accent Chair</name>
+    <description>Example long description</description>
+    <short_description>Example short description</short_description>
+    <pricing>
+      <regular>129.99</regular>
+      <tax_status>taxable</tax_status>
+      <tax_class></tax_class>
+    </pricing>
+    <stock>
+      <manage>true</manage>
+      <qty>8</qty>
+      <status>instock</status>
+      <backorders>no</backorders>
+    </stock>
+    <shipping>
+      <weight>24.5</weight>
+      <length>28</length>
+      <width>24</width>
+      <height>36</height>
+    </shipping>
+    <categories>
+      <category>Accent Chair</category>
+      <category>Living Room</category>
+      <tree>Furniture &gt; Living Room &gt; Chairs</tree>
+    </categories>
+    <images>
+      <image>https://example.com/a.jpg</image>
+      <image>https://example.com/b.jpg</image>
+    </images>
+    <attributes>
+      <attribute>
+        <name>Material</name>
+        <value>Rosewood</value>
+      </attribute>
+      <attribute>
+        <name>Color</name>
+        <value>Brown</value>
+      </attribute>
+    </attributes>
+    <meta>
+      <field>
+        <key>_brand</key>
+        <value>Benzara</value>
+      </field>
+      <field>
+        <key>_origin</key>
+        <value>India</value>
+      </field>
+      <field>
+        <key>_assembly_needed</key>
+        <value>No</value>
+      </field>
+    </meta>
+  </product>
+  <product>
+    <id>2</id>
+    <type>simple</type>
+    <sku>BENZ-002</sku>
+    <ean>5555555555555</ean>
+    <name>Wall Mirror</name>
+    <pricing>
+      <regular>209.00</regular>
+    </pricing>
+    <stock>
+      <qty>0</qty>
+      <status>outofstock</status>
+    </stock>
+    <shipping>
+      <weight>42</weight>
+      <length>45</length>
+      <width>3</width>
+      <height>35</height>
+    </shipping>
+    <categories>
+      <category>Mirror</category>
+      <tree>Decor &gt; Mirrors</tree>
+    </categories>
+    <images>
+      <image>https://example.com/mirror.jpg</image>
+    </images>
+    <attributes />
+    <meta />
+  </product>
+</catalog>
