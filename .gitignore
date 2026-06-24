@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local outputs and logs
+output/*.csv
+output/*.xlsx
+output/*.log
+!output/.gitkeep
+
+# Local data files
+data/*.xml
+data/*.xlsx
+!data/.gitkeep
+

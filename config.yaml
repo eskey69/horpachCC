@@ -1,0 +1,38 @@
+﻿{
+  "app": {
+    "name": "horpach_catalog_control",
+    "log_file": "output/run.log"
+  },
+  "logistics": {
+    "dim_divisor": 139,
+    "hold": {
+      "actual_weight_lb_gt": 50,
+      "longest_side_in_gt": 48,
+      "length_plus_girth_in_gt": 130,
+      "volume_in3_gt": 17280,
+      "dim_weight_lb_gt": 70,
+      "shipping_class_keywords": ["freight"]
+    },
+    "review": {
+      "actual_weight_lb_min": 35,
+      "actual_weight_lb_max": 50,
+      "longest_side_in_min": 42,
+      "longest_side_in_max": 48,
+      "dim_weight_lb_min": 50,
+      "dim_weight_lb_max": 70,
+      "keyword_flags": [
+        "fragile",
+        "mirror",
+        "glass",
+        "marble",
+        "patio",
+        "room divider",
+        "screen"
+      ]
+    }
+  },
+  "reporting": {
+    "price_update_csv": "output/IMPORT_PRICE_UPDATE_BENZARA_PASS.csv",
+    "workbook": "output/HORPACH_CATALOG_CONTROL_REPORT.xlsx"
+  }
+}
