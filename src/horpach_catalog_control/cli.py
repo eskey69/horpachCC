@@ -48,7 +48,6 @@ MATCHED_COLUMNS = [
 ]
 
 
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="horpach_catalog_control")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -70,12 +69,10 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-
 def _cmd_validate_config(config_path: str) -> int:
     settings = load_config(config_path)
     print(f"Config valid: {settings.app.name}")
     return 0
-
 
 
 def _cmd_inspect_inputs(benzara_input: str, woocommerce_input: str) -> int:
@@ -86,12 +83,10 @@ def _cmd_inspect_inputs(benzara_input: str, woocommerce_input: str) -> int:
     return 0
 
 
-
 def _primary_category(categories: list[str] | None) -> str | None:
     if not categories:
         return None
     return categories[0]
-
 
 
 def _matched_row(match: dict, logistics_config) -> dict:
@@ -109,6 +104,7 @@ def _matched_row(match: dict, logistics_config) -> dict:
         "Current Stock Qty": woo.get("stock_qty"),
         "Current Stock Status": woo.get("stock_status"),
         "Current Categories": ", ".join(woo.get("categories") or []),
+        "Woo Shipping Class": woo.get("shipping_class"),
         "Benzara Name": benzara.get("name"),
         "Benzara Brand": benzara.get("brand"),
         "Primary Category": _primary_category(benzara.get("categories")),
@@ -131,7 +127,6 @@ def _matched_row(match: dict, logistics_config) -> dict:
     }
 
 
-
 def _benzara_only_row(benzara: dict, logistics_config) -> dict:
     logistics = evaluate_logistics(benzara, config=logistics_config)
     decision = decide_catalog_status(benzara, logistics)
@@ -145,6 +140,7 @@ def _benzara_only_row(benzara: dict, logistics_config) -> dict:
         "Current Stock Qty": None,
         "Current Stock Status": None,
         "Current Categories": None,
+        "Woo Shipping Class": None,
         "Benzara Name": benzara.get("name"),
         "Benzara Brand": benzara.get("brand"),
         "Primary Category": _primary_category(benzara.get("categories")),
@@ -167,7 +163,6 @@ def _benzara_only_row(benzara: dict, logistics_config) -> dict:
     }
 
 
-
 def _woo_only_row(woo: dict, decision: str) -> dict:
     return {
         "WooCommerce ID": woo.get("post_id"),
@@ -179,6 +174,7 @@ def _woo_only_row(woo: dict, decision: str) -> dict:
         "Current Stock Qty": woo.get("stock_qty"),
         "Current Stock Status": woo.get("stock_status"),
         "Current Categories": ", ".join(woo.get("categories") or []),
+        "Woo Shipping Class": woo.get("shipping_class"),
         "Benzara Name": None,
         "Benzara Brand": None,
         "Primary Category": None,
@@ -201,7 +197,6 @@ def _woo_only_row(woo: dict, decision: str) -> dict:
     }
 
 
-
 def _conflict_row(conflict: dict) -> dict:
     return {
         "Conflict Type": conflict.get("type"),
@@ -213,7 +208,6 @@ def _conflict_row(conflict: dict) -> dict:
     }
 
 
-
 def _counter_rows(counter: Counter, section: str, label: str) -> list[dict]:
     rows: list[dict] = []
     for key, value in counter.most_common():
@@ -221,8 +215,7 @@ def _counter_rows(counter: Counter, section: str, label: str) -> list[dict]:
     return rows
 
 
-
-def _build_summary_rows(matches: dict[str, list[dict]], matched_rows: list[dict], new_rows: list[dict], sections: dict[str, list[dict]]) -> list[dict]:
+def _build_summary_rows(matches: dict[str, list[dict]], matched_rows: list[dict], new_rows: list[dict], orphan_rows: list[dict], other_supplier_rows: list[dict], sections: dict[str, list[dict]]) -> list[dict]:
     summary: list[dict] = [
         {"Section": "Counts", "Metric": "WooCommerce products", "Key": "total", "Value": len(matches["MATCHED_BENZARA"]) + len(matches["ORPHAN_STORE"]) + len(matches["OTHER_SUPPLIER"]) + len(matches["CONFLICT"])},
         {"Section": "Counts", "Metric": "Benzara products", "Key": "total", "Value": len(matches["MATCHED_BENZARA"]) + len(matches["NEW_BENZARA"]) + len(matches["CONFLICT"])},
@@ -239,15 +232,19 @@ def _build_summary_rows(matches: dict[str, list[dict]], matched_rows: list[dict]
     ]
 
     all_benzara_rows = matched_rows + new_rows
+    all_woo_rows = matched_rows + orphan_rows + other_supplier_rows
     category_counter = Counter(row.get("Primary Category") or "Uncategorized" for row in all_benzara_rows)
     brand_counter = Counter(row.get("Benzara Brand") or "Unknown" for row in all_benzara_rows)
     decision_counter = Counter(row.get("Catalog Decision") or "Unknown" for row in all_benzara_rows)
+    shipping_class_counter = Counter(row.get("Woo Shipping Class") or "None" for row in all_woo_rows)
+    woo_status_counter = Counter(row.get("Current Stock Status") or "Unknown" for row in all_woo_rows)
 
     summary.extend(_counter_rows(category_counter, "Breakdown", "Primary Category"))
     summary.extend(_counter_rows(brand_counter, "Breakdown", "Brand"))
     summary.extend(_counter_rows(decision_counter, "Breakdown", "Catalog Decision"))
+    summary.extend(_counter_rows(shipping_class_counter, "Woo Breakdown", "Shipping Class"))
+    summary.extend(_counter_rows(woo_status_counter, "Woo Breakdown", "Stock Status"))
     return summary
-
 
 
 def _build_sections(matches: dict[str, list[dict]], logistics_config) -> tuple[dict[str, list[dict]], list[dict]]:
@@ -269,9 +266,8 @@ def _build_sections(matches: dict[str, list[dict]], logistics_config) -> tuple[d
         "CONFLICTS": conflict_rows,
     }
 
-    summary = _build_summary_rows(matches, matched_rows, new_rows, sections)
+    summary = _build_summary_rows(matches, matched_rows, new_rows, orphan_rows, other_supplier_rows, sections)
     return sections, summary
-
 
 
 def _build_rules_rows(settings) -> list[dict]:
@@ -289,12 +285,10 @@ def _build_rules_rows(settings) -> list[dict]:
     ]
 
 
-
 def _write_log(output_dir: str | Path, lines: list[str]) -> Path:
     path = Path(output_dir) / 'run.log'
     path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
     return path
-
 
 
 def _cmd_run(config_path: str, benzara_input: str, woocommerce_input: str, output_dir: str, dry_run: bool) -> int:
@@ -333,7 +327,6 @@ def _cmd_run(config_path: str, benzara_input: str, woocommerce_input: str, outpu
     print(f"Wrote workbook: {workbook_path}")
     print(f"Wrote log: {log_path}")
     return 0
-
 
 
 def main(argv: list[str] | None = None) -> int:

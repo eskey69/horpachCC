@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from .models import LogisticsEvaluation, LogisticsMetrics, LogisticsStatus
 
 DEFAULT_DIM_DIVISOR = 139.0
@@ -23,9 +25,26 @@ DEFAULT_REVIEW_KEYWORDS = (
     "marble",
     "patio",
     "room divider",
+    "divider",
     "screen",
+    "wall art",
+    "canvas art",
+    "artwork",
+    "set of",
+    "2pc",
+    "3pc",
+    "4pc",
+    "5pc",
+    "6pc",
+    "piece set",
 )
 DEFAULT_HOLD_SHIPPING_KEYWORDS = ("freight",)
+SET_PATTERNS = (
+    r"\bset of\b",
+    r"\b\d+pc\b",
+    r"\b\d+ piece\b",
+    r"\bmulti[- ]piece\b",
+)
 
 
 def _safe_float(value) -> float | None:
@@ -113,6 +132,8 @@ def evaluate_logistics(product: dict, config=None) -> LogisticsEvaluation:
         for key in ("name", "title", "description", "short_description", "material", "color")
     ).lower()
 
+    has_set_pattern = any(re.search(pattern, text_blob) for pattern in SET_PATTERNS)
+
     if weight is None or length is None or width is None or height is None:
         reasons.append("missing_shipping_dimensions_or_weight")
 
@@ -148,7 +169,10 @@ def evaluate_logistics(product: dict, config=None) -> LogisticsEvaluation:
         reasons.append("dim_weight_review_band")
     if any(keyword.lower() in text_blob for keyword in review_keywords):
         reasons.append("keyword_review_flag")
+    if has_set_pattern:
+        reasons.append("set_or_multi_piece_review")
 
-    if reasons:
-        return LogisticsEvaluation(status=LogisticsStatus.REVIEW_LOGISTICS, reason_codes=reasons, metrics=metrics)
+    deduped_reasons = list(dict.fromkeys(reasons))
+    if deduped_reasons:
+        return LogisticsEvaluation(status=LogisticsStatus.REVIEW_LOGISTICS, reason_codes=deduped_reasons, metrics=metrics)
     return LogisticsEvaluation(status=LogisticsStatus.PASS_LOGISTICS, reason_codes=[], metrics=metrics)

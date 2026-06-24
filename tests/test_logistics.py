@@ -40,6 +40,19 @@ def test_logistics_review_for_borderline_and_keyword_product():
     assert "keyword_review_flag" in result.reason_codes
 
 
+def test_logistics_review_for_set_pattern_product():
+    result = evaluate_logistics({
+        "title": "Set of 2 Nesting Tables",
+        "weight_lb": 20,
+        "length_in": 20,
+        "width_in": 20,
+        "height_in": 20,
+        "shipping_class": "Parcel",
+    })
+    assert result.status is LogisticsStatus.REVIEW_LOGISTICS
+    assert "set_or_multi_piece_review" in result.reason_codes
+
+
 def test_logistics_hold_for_freight_or_oversize_product():
     result = evaluate_logistics({
         "title": "Large Dresser",
