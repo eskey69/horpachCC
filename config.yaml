@@ -42,8 +42,23 @@
       ]
     }
   },
+  "supplier": {
+    "benzara_sku_prefixes": ["BM", "BMS", "UPT", "BMR"],
+    "benzara_brands": ["Benzara", "The Urban Port", "Benjara"],
+    "historical_import_meta_keys": [
+      "_fxc_last_classification",
+      "_fxc_last_reasons",
+      "_fxc_last_factors",
+      "_horpach_last_auto_cat_result",
+      "_horpach_last_auto_cat_match_details",
+      "_horpach_old_product_cat_ids"
+    ],
+    "confirmed_other_supplier_prefixes": ["ACME", "ASH", "COA"],
+    "confirmed_other_supplier_brands": []
+  },
   "reporting": {
     "price_update_csv": "output/IMPORT_PRICE_UPDATE_BENZARA_PASS.csv",
-    "workbook": "output/HORPACH_CATALOG_CONTROL_REPORT.xlsx"
+    "workbook": "output/HORPACH_CATALOG_CONTROL_REPORT.xlsx",
+    "manual_review_workbook": "output/MANUAL_REVIEW_QUEUE.xlsx"
   }
 }

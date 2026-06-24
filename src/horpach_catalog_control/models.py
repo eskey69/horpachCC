@@ -1,4 +1,4 @@
-"""Normalized models used across the pipeline."""
+﻿"""Normalized models used across the pipeline."""
 
 from __future__ import annotations
 
@@ -22,6 +22,16 @@ class LogisticsStatus(str, Enum):
     HOLD_LOGISTICS = "HOLD_LOGISTICS"
 
 
+class CommercialStatus(str, Enum):
+    PRICE_READY = "PRICE_READY"
+    PRICE_REVIEW = "PRICE_REVIEW"
+    OUT_OF_STOCK = "OUT_OF_STOCK"
+    ORPHAN = "ORPHAN"
+    OTHER_SUPPLIER = "OTHER_SUPPLIER"
+    CONFLICT = "CONFLICT"
+    MISSING_DATA = "MISSING_DATA"
+
+
 class CatalogDecision(str, Enum):
     PASS = "PASS"
     REVIEW = "REVIEW"
@@ -30,6 +40,32 @@ class CatalogDecision(str, Enum):
     ORPHAN = "ORPHAN"
     OTHER_SUPPLIER = "OTHER_SUPPLIER"
     CONFLICT = "CONFLICT"
+
+
+class PriceUpdateStatus(str, Enum):
+    PRICE_READY = "PRICE_READY"
+    EXCLUDED_OUT_OF_STOCK = "EXCLUDED_OUT_OF_STOCK"
+    EXCLUDED_HOLD_LOGISTICS = "EXCLUDED_HOLD_LOGISTICS"
+    EXCLUDED_REVIEW_LOGISTICS = "EXCLUDED_REVIEW_LOGISTICS"
+    EXCLUDED_MISSING_BENZARA_PRICE = "EXCLUDED_MISSING_BENZARA_PRICE"
+    EXCLUDED_INVALID_BENZARA_PRICE = "EXCLUDED_INVALID_BENZARA_PRICE"
+    EXCLUDED_BUNDLE_PRODUCT = "EXCLUDED_BUNDLE_PRODUCT"
+    EXCLUDED_MISSING_SKU = "EXCLUDED_MISSING_SKU"
+    EXCLUDED_CONFLICT = "EXCLUDED_CONFLICT"
+    EXCLUDED_OTHER = "EXCLUDED_OTHER"
+
+
+class DataQualityStatus(str, Enum):
+    OK = "OK"
+    REVIEW = "REVIEW"
+    CRITICAL = "CRITICAL"
+
+
+class SupplierClassification(str, Enum):
+    BENZARA_MATCHED = "BENZARA_MATCHED"
+    BENZARA_ORPHAN_SUSPECTED = "BENZARA_ORPHAN_SUSPECTED"
+    OTHER_SUPPLIER_CONFIRMED = "OTHER_SUPPLIER_CONFIRMED"
+    UNKNOWN_SUPPLIER = "UNKNOWN_SUPPLIER"
 
 
 class InputPaths(BaseModel):
@@ -68,15 +104,37 @@ class WooProduct(BaseModel):
 
 
 class LogisticsMetrics(BaseModel):
+    actual_weight_lb: float | None = None
+    length_in: float | None = None
+    width_in: float | None = None
+    height_in: float | None = None
     volume_in3: float | None = None
     dim_weight_lb: float | None = None
     girth_in: float | None = None
     length_plus_girth_in: float | None = None
     billable_weight_lb: float | None = None
+    longest_side_in: float | None = None
 
 
 class LogisticsEvaluation(BaseModel):
     status: LogisticsStatus
     reason_codes: list[str] = Field(default_factory=list)
+    threshold_hits: list[str] = Field(default_factory=list)
+    missing_data: list[str] = Field(default_factory=list)
     metrics: LogisticsMetrics = Field(default_factory=LogisticsMetrics)
 
+
+class DataQualityResult(BaseModel):
+    status: DataQualityStatus
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class SupplierClassificationResult(BaseModel):
+    classification: SupplierClassification
+    reason_codes: list[str] = Field(default_factory=list)
+
+
+class PriceUpdateResult(BaseModel):
+    status: PriceUpdateStatus
+    exclusion_reason: str
+    suggested_action: str

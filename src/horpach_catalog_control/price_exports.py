@@ -12,16 +12,18 @@ CSV_COLUMNS = [
     "Meta: _horpach_catalog_decision",
     "Meta: _horpach_logistics_status",
     "Meta: _horpach_logistics_reasons",
+    "Meta: _horpach_price_update_status",
+    "Meta: _horpach_commercial_status",
 ]
 
 
 def build_price_update_rows(records: list[dict]) -> list[dict]:
     rows: list[dict] = []
     for record in records:
-        if record.get("Catalog Decision") != "PASS":
+        if record.get("Price Update Status") != "PRICE_READY":
             continue
-        regular_price = record.get("Benzara Regular Price")
         sku = record.get("SKU")
+        regular_price = record.get("Recommended Price Update") or record.get("Benzara Price") or record.get("Benzara Regular Price")
         if sku in (None, "") or regular_price is None:
             continue
         rows.append(
@@ -32,6 +34,8 @@ def build_price_update_rows(records: list[dict]) -> list[dict]:
                 "Meta: _horpach_catalog_decision": record.get("Catalog Decision"),
                 "Meta: _horpach_logistics_status": record.get("Logistics Status"),
                 "Meta: _horpach_logistics_reasons": record.get("Logistics Reasons"),
+                "Meta: _horpach_price_update_status": record.get("Price Update Status"),
+                "Meta: _horpach_commercial_status": record.get("Commercial Status"),
             }
         )
     return rows
@@ -49,7 +53,6 @@ def _validate_unique_skus(rows: list[dict]) -> None:
         seen.add(sku)
     if duplicates:
         raise ValueError(f"Duplicate SKU values detected in price export: {sorted(duplicates)}")
-
 
 
 def write_price_update_csv(output_path: str | Path, rows: list[dict]) -> Path:

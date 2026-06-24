@@ -34,9 +34,18 @@ class LogisticsConfig(BaseModel):
     review: ReviewConfig
 
 
+class SupplierConfig(BaseModel):
+    benzara_sku_prefixes: list[str] = Field(default_factory=list)
+    benzara_brands: list[str] = Field(default_factory=list)
+    historical_import_meta_keys: list[str] = Field(default_factory=list)
+    confirmed_other_supplier_prefixes: list[str] = Field(default_factory=list)
+    confirmed_other_supplier_brands: list[str] = Field(default_factory=list)
+
+
 class ReportingConfig(BaseModel):
     price_update_csv: str
     workbook: str
+    manual_review_workbook: str
 
 
 class AppConfig(BaseModel):
@@ -47,7 +56,9 @@ class AppConfig(BaseModel):
 class Settings(BaseModel):
     app: AppConfig
     logistics: LogisticsConfig
+    supplier: SupplierConfig
     reporting: ReportingConfig
+
 
 
 def load_config(config_path: str | Path = "config.yaml") -> Settings:

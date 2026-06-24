@@ -165,3 +165,4 @@ def parse_woocommerce_wxr(path: str | Path) -> list[dict]:
         products.append(record)
         element.clear()
     return products
+
