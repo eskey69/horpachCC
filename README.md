@@ -2,7 +2,9 @@
 
 ## Krotkie podsumowanie (PL)
 
-To repo zawiera lokalna aplikacje Python do analizy katalogu Benzara i eksportu WooCommerce dla Horpach.com. Narzedzie tworzy raporty XLSX i CSV do bezpiecznej oceny dopasowan, logistyki, jakosci danych, wykluczen cenowych i kolejek do recznej weryfikacji. MVP v1 nadal nie wykonuje zadnych zmian w WooCommerce, WordPressie, FTP, MySQL ani innych systemach produkcyjnych.
+To repo zawiera lokalna aplikacje Python do analizy katalogu Benzara i eksportu WooCommerce dla Horpach.com. Narzedzie tworzy raporty XLSX i CSV do bezpiecznej oceny dopasowan, logistyki, jakosci danych, wykluczen cenowych, automatycznych holdow, kandydatow Core i tylko tych kolejek recznej weryfikacji, ktore rzeczywiscie wymagaja decyzji czlowieka.
+
+MVP v1 nadal nie wykonuje zadnych zmian w WooCommerce, WordPressie, FTP, MySQL ani innych systemach produkcyjnych.
 
 ## Overview
 
@@ -15,7 +17,9 @@ The pipeline now answers:
 - which products are `PASS`, `REVIEW`, `HOLD_LOGISTICS`, `OUT_OF_STOCK`, `ORPHAN`, `OTHER_SUPPLIER`, or `CONFLICT`
 - which products have missing or invalid operational data
 - which orphaned WooCommerce products look like historical Benzara products
-- which records need manual review before any future import step
+- which records can be auto-held, auto-archived, or kept outside the Benzara workflow
+- which records truly require manual review
+- which Benzara products form an initial `CORE_CANDIDATES` shortlist
 
 ## Scope
 
@@ -29,7 +33,8 @@ The current implementation:
 - classifies price-update eligibility with explicit exclusion reasons
 - scores data quality issues and duplicate identifiers
 - classifies likely supplier origin for orphaned store products
-- generates management reports, a CSV price-update export, and a manual-review workbook
+- assigns a separate `recommended_operational_action` layer
+- generates management reports, price-update CSV, manual-review queue, auto-hold summary, and Core Candidates workbook
 
 ## Non-Goals
 
@@ -41,6 +46,7 @@ The tool does not:
 - generate AI titles, descriptions, or bundle logic
 - delete products, media, or catalog records
 - invent missing values
+- approve profitability or merchandising strategy
 
 ## Repository Layout
 
@@ -112,6 +118,7 @@ Normal run prints a concise summary for:
 - out-of-stock count
 - critical data-quality count
 - manual review queue size
+- Core candidate count
 - output file paths
 
 ## Outputs
@@ -134,6 +141,18 @@ Manual review workbook:
 output/MANUAL_REVIEW_QUEUE.xlsx
 ```
 
+Automatic hold summary workbook:
+
+```text
+output/AUTO_HOLD_SUMMARY.xlsx
+```
+
+Core candidates workbook:
+
+```text
+output/CORE_CANDIDATES.xlsx
+```
+
 Run log:
 
 ```text
@@ -146,6 +165,12 @@ output/run.log
 - `MATCHED_BENZARA`
 - `PRICE_UPDATE_PASS`
 - `PRICE_UPDATE_EXCLUDED`
+- `AUTO_PASS`
+- `AUTO_HOLD_LOGISTICS`
+- `AUTO_HOLD_OUT_OF_STOCK`
+- `AUTO_ARCHIVE_ORPHAN_CANDIDATES`
+- `KEEP_OUTSIDE_BENZARA_FLOW`
+- `CORE_CANDIDATES`
 - `NEW_BENZARA_PASS`
 - `NEW_BENZARA_REVIEW`
 - `HOLD_LOGISTICS`
@@ -220,17 +245,38 @@ output/run.log
 - `OTHER_SUPPLIER_CONFIRMED`
 - `UNKNOWN_SUPPLIER`
 
-## Report Features
+### Recommended operational actions
 
-`PRICE_UPDATE_EXCLUDED` explains every matched Benzara record that did not qualify for CSV export.
+- `AUTO_PASS`
+- `AUTO_HOLD_LOGISTICS`
+- `AUTO_HOLD_OUT_OF_STOCK`
+- `AUTO_ARCHIVE_ORPHAN_CANDIDATE`
+- `KEEP_OUTSIDE_BENZARA_FLOW`
+- `MANUAL_REVIEW_HIGH`
+- `MANUAL_REVIEW_MEDIUM`
+- `MANUAL_REVIEW_LOW`
 
-`DATA_QUALITY` highlights missing, invalid, or duplicate identifiers and operational values.
+## Operational Workflow
 
-`SUPPLIER_CLASSIFICATION` distinguishes likely historical Benzara store products from genuine non-Benzara products.
+The `recommended_operational_action` layer is intentionally separate from logistics, commercial, catalog, and supplier analysis. It represents the practical next step.
 
-`LOGISTICS_DIAGNOSTICS` exposes actual dimensions, billable weight, threshold hits, and missing-data flags for non-pass items.
+`AUTO_PASS` identifies products that are operationally clean enough for future pricing or shortlist work.
 
-`MANUAL_REVIEW_QUEUE.xlsx` combines logistics review, critical data issues, suspected historical Benzara orphans, unknown suppliers, and non-obvious price exclusions into one queue.
+`AUTO_HOLD_LOGISTICS` and `AUTO_HOLD_OUT_OF_STOCK` remove clear non-actionable cases from the default manual queue.
+
+`AUTO_ARCHIVE_ORPHAN_CANDIDATE` captures likely historical Benzara store products that should be reviewed separately from active catalog work.
+
+`KEEP_OUTSIDE_BENZARA_FLOW` isolates confirmed non-Benzara supplier products from Benzara pricing or import logic.
+
+`MANUAL_REVIEW_QUEUE.xlsx` now contains only records assigned `MANUAL_REVIEW_HIGH`, `MANUAL_REVIEW_MEDIUM`, or `MANUAL_REVIEW_LOW`.
+
+## Core Candidates
+
+`CORE_CANDIDATES.xlsx` is a logistics and data-quality shortlist only.
+
+It is not a profitability-approved, merchandising-approved, or launch-approved list.
+
+The shortlist is derived from records with `AUTO_PASS` plus configurable stock, image, category, packaging, and keyword scoring rules from `config.yaml`.
 
 ## Configuration
 
@@ -244,6 +290,9 @@ All operational rules live in `config.yaml`, including:
 - historical import metadata signals
 - known non-Benzara supplier prefixes
 - reporting output filenames
+- Core Candidate stock threshold
+- Core Candidate exclusion keywords
+- Core Candidate score weights and package-size thresholds
 
 ## Test Runner
 
@@ -253,7 +302,7 @@ Run the automated suite with a normal pytest invocation:
 python -m pytest -q
 ```
 
-Coverage includes parsers, matching, logistics, data quality, supplier classification, and integration-style pipeline verification.
+Coverage includes parsers, matching, logistics, data quality, supplier classification, operational actions, summary reconciliation, and integration-style pipeline verification.
 
 ## Safety Rules
 
@@ -262,6 +311,7 @@ Coverage includes parsers, matching, logistics, data quality, supplier classific
 - Missing critical values trigger review instead of guessed defaults.
 - Bundle and non-Benzara pricing remain outside automatic price-update scope.
 - Orphaned or other-supplier WooCommerce products are reported, not modified.
+- Core Candidates are only a shortlist for later business review.
 
 ## Documentation Map
 

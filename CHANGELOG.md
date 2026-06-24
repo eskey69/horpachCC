@@ -4,6 +4,25 @@
 
 ### Added
 
+- `recommended_operational_action` layer to separate practical next steps from logistics, commercial, and catalog analysis.
+- `AUTO_HOLD_SUMMARY.xlsx` workbook with automatic hold, archive-candidate, and outside-flow sheets.
+- `CORE_CANDIDATES.xlsx` shortlist workbook with deterministic priority scoring.
+- auto-action sheets in the main workbook: `AUTO_PASS`, `AUTO_HOLD_LOGISTICS`, `AUTO_HOLD_OUT_OF_STOCK`, `AUTO_ARCHIVE_ORPHAN_CANDIDATES`, and `KEEP_OUTSIDE_BENZARA_FLOW`.
+- manual review queue sorting fields: `Review Batch`, `Review Priority`, and `Sort Score`.
+- pytest coverage for operational actions, manual review filtering, core candidate eligibility, and action reconciliation.
+
+### Changed
+
+- Reduced the default manual review queue to only `MANUAL_REVIEW_HIGH`, `MANUAL_REVIEW_MEDIUM`, and `MANUAL_REVIEW_LOW` records.
+- Updated supplier classification so current-feed `NEW_BENZARA` records are treated as Benzara records.
+- Added deterministic Core Candidate scoring using configurable stock, image, dimension, and keyword signals.
+- Expanded `SUMMARY` with action-layer reconciliation and Core Candidate counts.
+- Updated README to document the new action layer, auto-hold workflow, and Core Candidate purpose.
+
+## 2026-06-24 (earlier)
+
+### Added
+
 - `data_quality.py` module for missing, invalid, and duplicate record diagnostics.
 - `supplier_classification.py` module for Benzara match, orphan suspicion, other-supplier, and unknown-supplier classification.
 - `analysis.py` pipeline assembly layer for consolidated report generation.

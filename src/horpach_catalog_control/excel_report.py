@@ -9,7 +9,12 @@ from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
-from .constants import MANUAL_REVIEW_SHEET_NAME, WORKSHEET_NAMES
+from .constants import (
+    AUTO_HOLD_WORKSHEET_NAMES,
+    CORE_CANDIDATES_WORKSHEET_NAMES,
+    MANUAL_REVIEW_SHEET_NAME,
+    WORKSHEET_NAMES,
+)
 
 HEADER_FILL = PatternFill(fill_type="solid", fgColor="D9E2F3")
 STATUS_FILLS = {
@@ -28,6 +33,20 @@ STATUS_FILLS = {
     "CRITICAL": PatternFill(fill_type="solid", fgColor="F4CCCC"),
     "UNKNOWN_SUPPLIER": PatternFill(fill_type="solid", fgColor="FFF2CC"),
     "BENZARA_ORPHAN_SUSPECTED": PatternFill(fill_type="solid", fgColor="FFF2CC"),
+    "AUTO_PASS": PatternFill(fill_type="solid", fgColor="E2F0D9"),
+    "AUTO_HOLD_LOGISTICS": PatternFill(fill_type="solid", fgColor="F4CCCC"),
+    "AUTO_HOLD_OUT_OF_STOCK": PatternFill(fill_type="solid", fgColor="E7E6E6"),
+    "AUTO_ARCHIVE_ORPHAN_CANDIDATE": PatternFill(fill_type="solid", fgColor="FCE4D6"),
+    "KEEP_OUTSIDE_BENZARA_FLOW": PatternFill(fill_type="solid", fgColor="FCE4D6"),
+    "MANUAL_REVIEW_HIGH": PatternFill(fill_type="solid", fgColor="F4CCCC"),
+    "MANUAL_REVIEW_MEDIUM": PatternFill(fill_type="solid", fgColor="FFF2CC"),
+    "MANUAL_REVIEW_LOW": PatternFill(fill_type="solid", fgColor="EAF4E3"),
+    "HIGH": PatternFill(fill_type="solid", fgColor="F4CCCC"),
+    "MEDIUM": PatternFill(fill_type="solid", fgColor="FFF2CC"),
+    "LOW": PatternFill(fill_type="solid", fgColor="EAF4E3"),
+    "HIGH_PRIORITY": PatternFill(fill_type="solid", fgColor="F4CCCC"),
+    "MEDIUM_PRIORITY": PatternFill(fill_type="solid", fgColor="FFF2CC"),
+    "LOW_PRIORITY": PatternFill(fill_type="solid", fgColor="EAF4E3"),
 }
 CURRENCY_COLUMNS = {
     "Current Regular Price",
@@ -59,12 +78,21 @@ DECIMAL_COLUMNS = {
     "billable_weight_lb",
     "longest_side_in",
     "Weight",
+    "Priority Score",
+    "Length",
+    "Width",
+    "Height",
+    "Volume",
+    "Dim Weight",
+    "Length + Girth",
 }
 INTEGER_COLUMNS = {
     "WooCommerce ID",
     "Benzara Stock Qty",
     "Current Stock Qty",
     "Woo Candidate Count",
+    "Stock Qty",
+    "Sort Score",
 }
 STATUS_COLUMNS = {
     "Catalog Decision",
@@ -75,7 +103,10 @@ STATUS_COLUMNS = {
     "Supplier Classification",
     "Priority",
     "Review Type",
+    "Review Priority",
+    "Review Batch",
     "Source Bucket",
+    "Recommended Operational Action",
 }
 TABLE_STYLE = TableStyleInfo(
     name="TableStyleMedium2",
@@ -86,7 +117,7 @@ TABLE_STYLE = TableStyleInfo(
 )
 
 
-def build_workbook(sheet_names: tuple[str, ...] = WORKSHEET_NAMES) -> Workbook:
+def build_workbook(sheet_names: tuple[str, ...]) -> Workbook:
     workbook = Workbook()
     workbook.active.title = sheet_names[0]
     for name in sheet_names[1:]:
@@ -165,27 +196,32 @@ def _write_table(worksheet, rows: list[dict], sheet_name: str) -> None:
     _autosize_and_filter(worksheet)
 
 
-def write_workbook(output_path: str | Path, report_sections: dict[str, list[dict]], summary_rows: list[dict], rules_rows: list[dict]) -> Path:
+def write_named_workbook(output_path: str | Path, sheet_names: tuple[str, ...], sections: dict[str, list[dict]]) -> Path:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    workbook = build_workbook()
-
-    _write_table(workbook["SUMMARY"], summary_rows, "SUMMARY")
-    _write_table(workbook["RULES_AND_CONFIG"], rules_rows, "RULES_AND_CONFIG")
-
-    for sheet_name in WORKSHEET_NAMES:
-        if sheet_name in {"SUMMARY", "RULES_AND_CONFIG"}:
-            continue
-        _write_table(workbook[sheet_name], report_sections.get(sheet_name, []), sheet_name)
-
+    workbook = build_workbook(sheet_names)
+    for sheet_name in sheet_names:
+        _write_table(workbook[sheet_name], sections.get(sheet_name, []), sheet_name)
     workbook.save(path)
     return path
+
+
+def write_workbook(output_path: str | Path, report_sections: dict[str, list[dict]], summary_rows: list[dict], rules_rows: list[dict]) -> Path:
+    sections = dict(report_sections)
+    sections["SUMMARY"] = summary_rows
+    sections["RULES_AND_CONFIG"] = rules_rows
+    return write_named_workbook(output_path, WORKSHEET_NAMES, sections)
 
 
 def write_manual_review_workbook(output_path: str | Path, manual_review_rows: list[dict]) -> Path:
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    workbook = build_workbook((MANUAL_REVIEW_SHEET_NAME,))
-    _write_table(workbook[MANUAL_REVIEW_SHEET_NAME], manual_review_rows, MANUAL_REVIEW_SHEET_NAME)
-    workbook.save(path)
-    return path
+    return write_named_workbook(output_path, (MANUAL_REVIEW_SHEET_NAME,), {MANUAL_REVIEW_SHEET_NAME: manual_review_rows})
+
+
+def write_auto_hold_workbook(output_path: str | Path, summary_rows: list[dict], sections: dict[str, list[dict]]) -> Path:
+    workbook_sections = dict(sections)
+    workbook_sections["SUMMARY"] = summary_rows
+    return write_named_workbook(output_path, AUTO_HOLD_WORKSHEET_NAMES, workbook_sections)
+
+
+def write_core_candidates_workbook(output_path: str | Path, core_candidate_rows: list[dict]) -> Path:
+    return write_named_workbook(output_path, CORE_CANDIDATES_WORKSHEET_NAMES, {"CORE_CANDIDATES": core_candidate_rows})

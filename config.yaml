@@ -1,4 +1,4 @@
-﻿{
+{
   "app": {
     "name": "horpach_catalog_control",
     "log_file": "output/run.log"
@@ -56,9 +56,67 @@
     "confirmed_other_supplier_prefixes": ["ACME", "ASH", "COA"],
     "confirmed_other_supplier_brands": []
   },
+  "core_candidates": {
+    "minimum_stock_qty": 10,
+    "lightweight_weight_lb_max": 25,
+    "compact_longest_side_in_max": 30,
+    "compact_volume_in3_max": 7000,
+    "borderline_longest_side_in_min": 30,
+    "borderline_volume_in3_min": 5000,
+    "excluded_category_keywords": [
+      "patio",
+      "outdoor",
+      "dining set",
+      "sofa",
+      "sectional",
+      "bed",
+      "recliner",
+      "wardrobe",
+      "room divider",
+      "screen",
+      "mirror",
+      "wall art"
+    ],
+    "excluded_name_keywords": [
+      "patio",
+      "outdoor",
+      "dining set",
+      "sofa",
+      "sectional",
+      "bed",
+      "recliner",
+      "wardrobe",
+      "room divider",
+      "divider",
+      "screen",
+      "large mirror",
+      "wall art",
+      "canvas art",
+      "artwork"
+    ],
+    "fragile_keywords": ["fragile", "mirror", "glass", "marble", "wall art", "canvas art", "artwork"],
+    "patio_keywords": ["patio", "outdoor"],
+    "set_keywords": ["set of", "2pc", "3pc", "4pc", "5pc", "6pc", "piece set", "dining set"],
+    "score_weights": {
+      "pass_logistics": 25,
+      "stock_at_least_threshold": 20,
+      "valid_image_url": 15,
+      "valid_brand": 10,
+      "valid_category": 10,
+      "lightweight_package": 10,
+      "compact_dimensions": 10,
+      "fragile_keyword_penalty": 30,
+      "borderline_dimensions_penalty": 20,
+      "low_stock_penalty": 20,
+      "patio_keyword_penalty": 25,
+      "set_keyword_penalty": 25
+    }
+  },
   "reporting": {
     "price_update_csv": "output/IMPORT_PRICE_UPDATE_BENZARA_PASS.csv",
     "workbook": "output/HORPACH_CATALOG_CONTROL_REPORT.xlsx",
-    "manual_review_workbook": "output/MANUAL_REVIEW_QUEUE.xlsx"
+    "manual_review_workbook": "output/MANUAL_REVIEW_QUEUE.xlsx",
+    "auto_hold_workbook": "output/AUTO_HOLD_SUMMARY.xlsx",
+    "core_candidates_workbook": "output/CORE_CANDIDATES.xlsx"
   }
 }

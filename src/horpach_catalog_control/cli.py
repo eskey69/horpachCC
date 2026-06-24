@@ -8,7 +8,12 @@ from pathlib import Path
 from .analysis import build_pipeline_outputs
 from .benzara_parser import inspect_benzara_input, parse_benzara_xml
 from .config import load_config
-from .excel_report import write_manual_review_workbook, write_workbook
+from .excel_report import (
+    write_auto_hold_workbook,
+    write_core_candidates_workbook,
+    write_manual_review_workbook,
+    write_workbook,
+)
 from .price_exports import build_price_update_rows, write_price_update_csv
 from .utils import ensure_directory, summarize_file
 from .woo_wxr_parser import inspect_woocommerce_input, parse_woocommerce_wxr
@@ -78,9 +83,10 @@ def _build_terminal_summary(outputs: dict, benzara_products: list[dict], woo_pro
         f"PASS logistics: {_count_by_field(all_records, 'Logistics Status', 'PASS_LOGISTICS')}",
         f"REVIEW logistics: {_count_by_field(all_records, 'Logistics Status', 'REVIEW_LOGISTICS')}",
         f"HOLD logistics: {_count_by_field(all_records, 'Logistics Status', 'HOLD_LOGISTICS')}",
-        f"Out of stock: {_count_by_field(all_records, 'Catalog Decision', 'OUT_OF_STOCK')}",
+        f"Out of stock: {_count_by_field(all_records, 'Commercial Status', 'OUT_OF_STOCK')}",
         f"Data quality critical: {_count_by_field(all_records, 'Data Quality Status', 'CRITICAL')}",
         f"Manual review queue: {len(outputs['manual_review_rows'])}",
+        f"Core candidates: {len(outputs['core_candidate_rows'])}",
     ]
 
 
@@ -101,12 +107,16 @@ def _cmd_run(config_path: str, benzara_input: str, woocommerce_input: str, outpu
     csv_path = _resolve_output_path(output_dir, settings.reporting.price_update_csv)
     workbook_path = _resolve_output_path(output_dir, settings.reporting.workbook)
     manual_review_path = _resolve_output_path(output_dir, settings.reporting.manual_review_workbook)
+    auto_hold_path = _resolve_output_path(output_dir, settings.reporting.auto_hold_workbook)
+    core_candidates_path = _resolve_output_path(output_dir, settings.reporting.core_candidates_workbook)
     log_path = _resolve_output_path(output_dir, settings.app.log_file)
 
     price_rows = build_price_update_rows(outputs["price_rows"])
     write_price_update_csv(csv_path, price_rows)
     write_workbook(workbook_path, outputs["report_sections"], outputs["summary_rows"], outputs["rules_rows"])
     write_manual_review_workbook(manual_review_path, outputs["manual_review_rows"])
+    write_auto_hold_workbook(auto_hold_path, outputs["auto_hold_summary_rows"], outputs["auto_hold_sections"])
+    write_core_candidates_workbook(core_candidates_path, outputs["core_candidate_rows"])
     _write_log(log_path, outputs["log_lines"])
 
     for line in summary_lines:
@@ -115,6 +125,8 @@ def _cmd_run(config_path: str, benzara_input: str, woocommerce_input: str, outpu
     print(f"- {csv_path}")
     print(f"- {workbook_path}")
     print(f"- {manual_review_path}")
+    print(f"- {auto_hold_path}")
+    print(f"- {core_candidates_path}")
     print(f"- {log_path}")
     return 0
 

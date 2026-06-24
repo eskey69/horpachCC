@@ -12,7 +12,7 @@ CONFIG = SupplierConfig(
 )
 
 
-def test_supplier_classification_marks_current_matches_as_benzara():
+def test_supplier_classification_marks_current_feed_records_as_benzara():
     result = classify_supplier(
         bucket="MATCHED_BENZARA",
         woo={"sku": "BM-100"},
@@ -20,7 +20,17 @@ def test_supplier_classification_marks_current_matches_as_benzara():
         known_benzara_brands={"benzara"},
     )
     assert result.classification is SupplierClassification.BENZARA_MATCHED
-    assert suggest_supplier_action(result) == "Treat as active Benzara match"
+    assert suggest_supplier_action(result) == "Treat as active Benzara record"
+
+
+def test_supplier_classification_marks_new_benzara_records_as_benzara():
+    result = classify_supplier(
+        bucket="NEW_BENZARA",
+        woo=None,
+        config=CONFIG,
+        known_benzara_brands={"benzara"},
+    )
+    assert result.classification is SupplierClassification.BENZARA_MATCHED
 
 
 def test_supplier_classification_detects_historical_benzara_signals():
@@ -41,7 +51,7 @@ def test_supplier_classification_detects_historical_benzara_signals():
 def test_supplier_classification_marks_known_other_supplier():
     result = classify_supplier(
         bucket="OTHER_SUPPLIER",
-        woo={"sku": "ACME-22", "title": "Acme Home Lamp", "prefixed_meta": {}},
+        woo={"sku": "ACME-22", "title": "Acme Home Lamp", "prefixed_meta": {}, "brand": "Acme Home"},
         config=CONFIG,
         known_benzara_brands={"benzara"},
     )
